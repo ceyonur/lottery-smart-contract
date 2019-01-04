@@ -38,13 +38,14 @@ contract Lottery {
   uint distributedMoney;
   //Charity address
   address public charityAddress;
+  uint charityBalance;
   // When the lottery started
   uint public lotteryStart;
 
   //---------Constants---------------
   // Durations for lottery stages in days
-  uint constant PURCHASE_DURATION = 5 days;
-  uint constant REVEAL_DURATION = 2 days;
+  uint public constant PURCHASE_DURATION = 5 days;
+  uint public constant REVEAL_DURATION = 2 days;
 
   uint constant TICKET_START = 0;
   uint constant TICKET_END = 99999;
@@ -79,7 +80,7 @@ contract Lottery {
   //Create the lottery
   function Lottery(address _charityAddress) {
     charityAddress = _charityAddress;
-    resetLottery();
+    resetLottery(false);
   }
 
   // Fallback function
@@ -88,7 +89,7 @@ contract Lottery {
   }
 
   // After winners have been declared and awarded, clear the arrays and reset the balances
-  function resetLottery() private {
+  function resetLottery(bool refunded) private {
     lotteryStart = now;
     for(uint i = 0; i < playableTickets.length; i++){
       delete playerTickets[playableTickets[i]];
@@ -106,7 +107,12 @@ contract Lottery {
     randomNumbers.length = 0;
     delete winners;
     winners.length = 0;
-    lastWinnerTickets = winnerTickets;
+    if(!refunded){
+        lastWinnerTickets = winnerTickets;
+    }
+    else{
+        delete lastWinnerTickets;
+    }
     delete winnerTickets;
     delete playableTickets;
     playableTickets.length = 0;
@@ -142,7 +148,7 @@ contract Lottery {
     * @param ticketNumber Selected ticket number.
     * @return true/false.
     */
-  function enterLottery(uint randomNumber, uint ticketNumber) external purchaseOngoing returns (bool) {
+  function enterLottery(uint randomNumber, uint ticketNumber) external revealOngoing returns (bool) {
     SenderHash storage sh = consumerHashes[ticketNumber];
     require(sh.sender == msg.sender && keccak256(randomNumber, ticketNumber, msg.sender) == sh.hash);
     require(playerTickets[ticketNumber] == 0);
@@ -163,7 +169,7 @@ contract Lottery {
     if (checkEnoughMoneyCollected()){
       distributeAwards();
       sendRemainingToCharity();
-      resetLottery();
+      resetLottery(false);
       return true;
     }
     else {
@@ -206,9 +212,9 @@ contract Lottery {
     for(uint i = 0; i < consumedTickets.length; i++){
       uint ticket = consumedTickets[i];
       address consumerAddress = consumerHashes[ticket].sender;
-      consumerAddress.transfer(TICKET_COST);
+      userBalances[consumerAddress] += TICKET_COST;
     }
-    resetLottery();
+    resetLottery(true);
   }
 
   /** @dev Send remaining money to the charityAddress
@@ -216,9 +222,14 @@ contract Lottery {
     */
   function sendRemainingToCharity() private returns (bool){
     uint remaining = collectedMoney - distributedMoney;
-    require(remaining > 0);
-    charityAddress.transfer(remaining);
+    charityBalance += remaining;
     return true;
+  }
+
+  function charityWithdraw() public returns (bool){
+    require(msg.sender == charityAddress);
+    require(charityBalance > 0);
+    msg.sender.transfer(charityBalance);
   }
 
   /** @dev Generates five digit winner tickets and checks if there is any player wins it.
