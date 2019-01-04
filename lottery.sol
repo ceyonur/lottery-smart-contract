@@ -9,7 +9,6 @@ contract Lottery {
   }
 
   //----------Variables------------
-  address public owner;
 
   // Ticket to SenderHash
   mapping (uint => SenderHash) consumerHashes;
@@ -28,6 +27,8 @@ contract Lottery {
   address[] winners;
   //Selected tickets
   uint[23] winnerTickets;
+  //Winners of last lottery
+  uint[23] lastWinnerTickets;
   //Random numbers from users
   uint[] randomNumbers;
   //Collected money in single run
@@ -73,17 +74,10 @@ contract Lottery {
     require(now < end && now > lotteryStart + PURCHASE_DURATION);
     _;
   }
-
-  // Checks if runnable by only contract owner
-  modifier ownerOnly(){
-    require(msg.sender == owner);
-    _;
-  }
   //---------Functions----------------
 
   //Create the lottery
   function Lottery(address _charityAddress) {
-    owner = msg.sender;
     charityAddress = _charityAddress;
     resetLottery();
   }
@@ -112,6 +106,7 @@ contract Lottery {
     randomNumbers.length = 0;
     delete winners;
     winners.length = 0;
+    lastWinnerTickets = winnerTickets;
     delete winnerTickets;
     delete playableTickets;
     playableTickets.length = 0;
@@ -141,7 +136,7 @@ contract Lottery {
     return ticketNumber;
   }
 
-  /** @dev Checks if sender has sent a valid random number to join the actual lotteryy
+  /** @dev Checks if sender has sent a valid random number to join the actual lottery
     * @param randomNumber A number selected by user, which was previously sent within the playerHash.
     * @param ticketNumber Selected ticket number.
     * @return true/false.
@@ -159,7 +154,7 @@ contract Lottery {
   /** @dev Generates winner and distributes or refunds the money.
     * @return true if awards are distributed, otherwise false if money is refunded.
     */
-  function generateWinners() external ownerOnly revealOngoing returns (bool) {
+  function generateWinners() private returns (bool) {
     generateFiveDigitWinners();
     generateFourDigitWinners();
     generateThreeDigitWinners();
@@ -179,18 +174,22 @@ contract Lottery {
   /** @dev Shows generated winning ticket numbers.
     * @return winner tickets array.
     */
-  function getWinnerTickets() external view revealOngoing returns (uint[23]){
-    return winnerTickets;
+  function getWinnerTickets() external view returns (uint[23]){
+    return lastWinnerTickets;
   }
 
   /** @dev Sends available balance to msg.sender.
     * @return returns transferred amount.
     */
   function withdrawLotteryMoney() external returns (uint){
+    if(isLotteryEnded()){
+      generateWinners();
+    }
     uint prize = userBalances[msg.sender];
-    require(prize > 0);
-    userBalances[msg.sender] = 0;
-    msg.sender.transfer(prize);
+    if (prize > 0){
+      userBalances[msg.sender] = 0;
+      msg.sender.transfer(prize);
+    }
     return prize;
   }
 
@@ -308,5 +307,9 @@ contract Lottery {
     */
   function random(uint seed) private view returns (uint) {
     return uint(keccak256(randomNumbers, playableTickets, seed));
+  }
+
+  function isLotteryEnded() private view returns (bool){
+    return now > lotteryStart + PURCHASE_DURATION + REVEAL_DURATION;
   }
 }
