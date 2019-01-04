@@ -129,6 +129,7 @@ contract Lottery {
     */
   function buyTicket(bytes32 playerHash, uint ticketNumber) external payable purchaseOngoing returns (uint) {
     require(msg.value == TICKET_COST);
+    require(playerHash != 0);
     require(ticketAvailable(ticketNumber));
     consumedTickets.push(ticketNumber);
     consumerHashes[ticketNumber] = SenderHash(playerHash, msg.sender);
