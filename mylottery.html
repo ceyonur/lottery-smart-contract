@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Browser Transactions</title>
+  <script src="bkeccak256.js"></script>
+  <script src="bpromisify.js"></script>
+  <script src= "bmylottery.js"></script>
+</head>
+<body>
+  <h1>Lottery Stats</h1>
+
+    <h2>Charity Address</h2>
+    <button onclick="charityAddress()">Ask Lottery Charity Address</button>
+    <p id="lotterycharitystatus"></p>
+
+    <h2>Lottery Start Date</h2>
+    <button onclick="lotteryStartedAt()">Ask Lottery Start Date</button>
+    <p id="lotterystartedstatus"></p>
+
+    <h2>Estimate Lottery Stage</h2>
+    <button onclick="estimateLotteryStage()">Estimate Lottery Stage</button>
+    <p id="lotterystagestatus"></p>
+
+    <h2>Last Winner Ticker Numbers</h2>
+    <button onclick="lastWinners()">Ask Last Winners</button>
+    <p id="lastwinnersstatus"></p>
+
+    <h2>Ticket Available</h2>
+    <form>
+      <p> Ticket Number : <input type="number" id="ticketavailable" min="0" max="99999"></input> </p>
+    </form>
+    <button onclick="ticketAvailable()">Ask Ticket</button>
+    <p id="ticketavailablestatus"></p>
+
+  <h1>Buy Ticket</h1>
+  <form>
+    <p> Ticket Number : <input type="number" id="buyticketnumber" min="0" max="99999"></input> </p>
+    <p> User Number (Required to enter lottery) : <input type="number" id="buyrandomnumber" style="width:200px;" placeholder="Don't forget your number"></input> </p>
+  </form>
+  <button onclick="buyTicket()">Buy Ticket (2 ether)</button>
+  <p id="buyticketstatus"></p>
+
+  <h1>Enter Lottery</h1
+    <p>(Works only in reveal stage)</p>
+  <form>
+    <p> Ticket Number : <input type="number" id="enterticketnumber" min="0" max="99999"></input> </p>
+    <p> User Number : <input type="number" id="enterrandomnumber"></input> </p>
+  </form>
+  <button onclick="enterLottery()">Enter Lottery with Ticket</button>
+  <p id="enterlotterystatus"></p>
+
+
+  <h1>Withdraw Money</h1>
+  <button onclick="withdrawLotteryMoney()">Withdraw Your Money</button>
+  <p id="withdrawstatus"></p>
+
+  <h1>Charity Withdraw Money</h1>
+  <button onclick="charityWithdraw()">Withdraw Charity Money</button>
+  <p id="charitywithdrawstatus"></p>
+</body>
+</html>
